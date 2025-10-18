@@ -1,0 +1,240 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "entity": {
+            "type": "object",
+            "properties": {
+                "_id": {
+                    "type": "string"
+                }
+            },
+            "defaultSnippets": [
+                {
+                    "label": "New entity",
+                    "body": {
+                        "_id": "$1"
+                    }
+                }
+            ]
+        },
+        "dtl": {
+            "addFunction": {
+                "type": "array",
+                "prefixItems": [
+                    {
+                        "type": "string",
+                        "const": "add"
+                    }
+                ]
+            },
+            "commentFunction": {
+                "type": "array",
+                "prefixItems": [
+                    {
+                        "type": "string",
+                        "const": "comment"
+                    }
+                ]
+            },
+            "transformFunction": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/dtl/addFunction"
+                    },
+                    {
+                        "$ref": "#/$defs/dtl/commentFunction"
+                    }
+                ],
+                "defaultSnippets": [
+                    {
+                        "label": "New comment",
+                        "body": [
+                            "comment",
+                            "${0:some comment}"
+                        ]
+                    },
+                    {
+                        "label": "Add property",
+                        "body": [
+                            "add",
+                            "${1:some_target_property}",
+                            "$0"
+                        ]
+                    }
+                ]
+            }
+        },
+        "transforms": {
+            "dtl": {
+                "type": "object",
+                "properties": {
+                    "rules": {
+                        "type": "object",
+                        "properties": {
+                            "default": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/dtl/transformFunction"
+                                },
+                                "minItems": 1
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "sources": {
+            "embedded": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "embedded"
+                    },
+                    "entities": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string"
+                                }
+                            },
+                            "defaultSnippets": [
+                                {
+                                    "label": "New entity",
+                                    "body": {
+                                        "_id": "${0:some_entity_identifier}"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "entities"
+                ]
+            },
+            "dataset": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "dataset"
+                    },
+                    "dataset": {
+                        "type": "string"
+                    }
+                }
+            },
+            "merge": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "const": "merge"
+                    },
+                    "datasets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "equality_sets": {
+                        "type": "array"
+                    },
+                    "version": {
+                        "type": "number"
+                    }
+                }
+            }
+        }
+    },
+    "$id": "pipe.json",
+    "title": "Pipe",
+    "description": "Pipe with DTL",
+    "type": "object",
+    "properties": {
+        "_id": {
+            "description": "Pipe identifier, used as default sink dataset name unless overriden.",
+            "type": "string"
+        },
+        "source": {
+            "markdownDescription": "See [sources](https://docs.sesam.io/hub/documentation/service-configuration/pipes/configuration-sources.html#source-section)",
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/sources/embedded"
+                },
+                {
+                    "$ref": "#/$defs/sources/dataset"
+                },
+                {
+                    "$ref": "#/$defs/sources/merge"
+                }
+            ],
+            "defaultSnippets": [
+                {
+                    "label": "Insert dataset source",
+                    "body": {
+                        "type": "dataset",
+                        "dataset": "${1:some_dataset}"
+                    }
+                },
+                {
+                    "label": "Insert embedded source",
+                    "body": {
+                        "type": "embedded",
+                        "entities": [
+                            "$0"
+                        ]
+                    }
+                },
+                {
+                    "label": "Insert merge source",
+                    "body": {
+                        "type": "merge",
+                        "datasets": [
+                            "${1:dataset_a} ${2:a}",
+                            "${3:dataset_b} ${4:b}"
+                        ],
+                        "equality_sets": [
+                            [
+                                "$2.${5:_id}",
+                                "$4.${6:_id}"
+                            ]
+                        ],
+                        "version": 2
+                    }
+                }
+            ]
+        },
+        "transform": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/transforms/dtl"
+                }
+            ],
+            "defaultSnippets": [
+                {
+                    "label": "Insert DTL transform",
+                    "body": {
+                        "type": "dtl",
+                        "rules": {
+                            "default": [
+                                [
+                                    "copy",
+                                    "*"
+                                ],
+                                "$0"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "required": [
+        "_id",
+        "source"
+    ]
+}

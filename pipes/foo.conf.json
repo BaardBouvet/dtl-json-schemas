@@ -1,0 +1,23 @@
+{
+    "$schema": "../schemas/pipe.json",
+    "_id": "a",
+    "source": {
+        "type": "embedded",
+        "entities": [
+            {
+                "_id": ""
+            }
+        ]
+    },
+    "transform": {
+        "type": "dtl",
+        "rules": {
+            "default": [
+                [
+                    "comment",
+                    "some comment"
+                ]
+            ]
+        }
+    }
+}

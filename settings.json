@@ -1,0 +1,8 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["*.old.conf.json"],
+      "url": "file:///home/baard/Projects/example-config/schemas/pipe.json"
+    }
+  ]
+}
