@@ -6,16 +6,44 @@
         "entities": [
             {
                 "_id": ""
+            },
+            {
+                "_id": "bar"
             }
         ]
-    },
-    "transform": {
+    }, "transform": {
         "type": "dtl",
         "rules": {
             "default": [
                 [
-                    "comment",
-                    "some comment"
+                    "copy",
+                    "_id"
+                ], [
+                    "add",
+                    "name",
+                    "_S.ContactName"
+                ], [
+                    "add",
+                    "some_target_property",
+                    [
+                        "apply",
+                        "some_rule",
+                        [
+                            "hops",
+                            {
+                                "datasets": [
+                                    "some_dataset a"
+                                ],
+                                "where": [
+                                    [
+                                        "eq",
+                                        "_S.some_source_property",
+                                        "a.some_other_property"
+                                    ]
+                                ]
+                            }
+                        ]
+                    ]
                 ]
             ]
         }
