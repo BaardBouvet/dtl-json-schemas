@@ -1,0 +1,90 @@
+{
+    "_id": "person-with-orders",
+    "type": "pipe",
+    "source": {
+        "type": "dataset",
+        "dataset": "person"
+    },
+    "transform": {
+        "type": "dtl",
+        "rules": {
+            "default": [
+                [
+                    "copy",
+                    "_id"
+                ],
+                [
+                    "add",
+                    "type",
+                    "customer"
+                ],
+                [
+                    "add",
+                    "name",
+                    [
+                        "upper",
+                        [
+                            "lower",
+                            "_S.name"
+                        ]
+                    ]
+                ],
+                [
+                    "add",
+                    "orders",
+                    [
+                        "sorted",
+                        "_.amount",
+                        [
+                            "apply-hops",
+                            "order",
+                            {
+                                "datasets": [
+                                    "orders o"
+                                ],
+                                "where": [
+                                    [
+                                        "eq",
+                                        "_S._id",
+                                        "o.cust_id"
+                                    ]
+                                ]
+                            }
+                        ]
+                    ]
+                ],
+                [
+                    "add",
+                    "order_count",
+                    [
+                        "count",
+                        "_T.orders"
+                    ]
+                ],
+                [
+                    "filter",
+                    [
+                        "gt",
+                        "_T.order_count",
+                        10
+                    ]
+                ]
+            ],
+            "order": [
+                [
+                    "copy",
+                    "_id"
+                ],
+                [
+                    "add",
+                    "amount",
+                    "_S.amount"
+                ]
+            ]
+        }
+    },
+    "sink": {
+        "type": "dataset",
+        "dataset": "person-with-orders"
+    }
+}

@@ -1,25 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$defs": {
-        "entity": {
-            "type": "object",
-            "properties": {
-                "_id": {
-                    "type": "string"
-                }
-            },
-            "defaultSnippets": [
-                {
-                    "label": "New entity",
-                    "body": {
-                        "_id": "$1"
-                    }
-                }
-            ]
-        },
         "dtl": {
             "expression": {
-                "anyOf": [
+                "oneOf": [
                     {
                         "type": "string"
                     },
@@ -40,32 +24,48 @@
                     }
                 ],
                 "defaultSnippets": [
-                        {
-                            "label": "Source",
-                            "body": "_S.${0:some_source_property}"
-                        },
-                        {
-                            "label": "Target",
-                            "body": "_T.${0:some_target_property}"
-                        },
-                                                {
-                            "label": "Hops",
-                            "body": ["hops", {
-                                "datasets": ["${1:some_dataset} ${2:a}"],
+                    {
+                        "label": "Source",
+                        "body": "_S.${0:some_source_property}"
+                    },
+                    {
+                        "label": "Target",
+                        "body": "_T.${0:some_target_property}"
+                    },
+                    {
+                        "label": "Hops",
+                        "body": [
+                            "hops",
+                            {
+                                "datasets": [
+                                    "${1:some_dataset} ${2:a}"
+                                ],
                                 "where": [
-                                    ["eq", "_S.${3:some_source_property}", "$2.${4:some_other_property}"]
+                                    [
+                                        "eq",
+                                        "_S.${3:some_source_property}",
+                                        "$2.${4:some_other_property}"
+                                    ]
                                 ]
-                            }]
-                        },
-                        {
-                            "label": "Apply rule",
-                            "body": [
-                                "apply",
-                                "${1:some_rule}",
-                                "$0"
-                            ]
-                        }
-                    ]
+                            }
+                        ]
+                    },
+                    {
+                        "label": "Apply rule",
+                        "body": [
+                            "apply",
+                            "${1:some_rule}",
+                            "$0"
+                        ]
+                    },
+                    {
+                        "label": "List",
+                        "body": [
+                            "list",
+                            "$0"
+                        ]
+                    }
+                ]
             },
             "transformFunction": {
                 "type": "array",
@@ -74,6 +74,10 @@
                     "$ref": "#/$defs/dtl/expression"
                 },
                 "defaultSnippets": [
+                    {
+                        "label": "Test",
+                        "body": "$BLOCK_COMMENT_START Hello World $BLOCK_COMMENT_END"
+                    },
                     {
                         "label": "New comment",
                         "body": [
@@ -102,18 +106,41 @@
         "transforms": {
             "dtl": {
                 "type": "object",
+                "required": [
+                    "type",
+                    "rules"
+                ],
                 "properties": {
+                    "type": {
+                        "const": "dtl"
+                    },
                     "rules": {
                         "type": "object",
-                        "properties": {
-                            "default": {
+                        "patternProperties": {
+                            "^.*$": {
                                 "type": "array",
                                 "items": {
                                     "$ref": "#/$defs/dtl/transformFunction"
                                 },
                                 "minItems": 1
                             }
-                        }
+                        },
+                        "required": [
+                            "default"
+                        ]
+                    }
+                }
+            }
+        },
+        "sinks": {
+            "dataset": {
+                "type": "object",
+                "properties": {
+                    "dataset": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "const": "dataset"
                     }
                 }
             }
@@ -123,7 +150,6 @@
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string",
                         "const": "embedded"
                     },
                     "entities": {
@@ -137,7 +163,7 @@
                             },
                             "defaultSnippets": [
                                 {
-                                    "label": "New entity",
+                                    "label": "New embedded entity",
                                     "body": {
                                         "_id": "${0:some_entity_identifier}"
                                     }
@@ -147,6 +173,7 @@
                     }
                 },
                 "required": [
+                    "type",
                     "entities"
                 ]
             },
@@ -154,19 +181,21 @@
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string",
                         "const": "dataset"
                     },
                     "dataset": {
                         "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "type",
+                    "dataset"
+                ]
             },
             "merge": {
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string",
                         "const": "merge"
                     },
                     "datasets": {
@@ -181,22 +210,36 @@
                     "version": {
                         "type": "number"
                     }
-                }
+                },
+                "required": [
+                    "type",
+                    "datasets"
+                ]
             }
         }
     },
     "$id": "pipe.json",
     "title": "Pipe",
-    "description": "Pipe with DTL",
+    "description": "A pipe configuration with sources, transforms and sinks.",
     "type": "object",
     "properties": {
         "_id": {
             "description": "Pipe identifier, used as default sink dataset name unless overriden.",
             "type": "string"
         },
+        "type": {
+            "const": "pipe"
+        },
+        "sink": {
+            "oneOf": [
+                {
+                    "$ref": "#/$defs/sinks/dataset"
+                }
+            ]
+        },
         "source": {
             "markdownDescription": "See [sources](https://docs.sesam.io/hub/documentation/service-configuration/pipes/configuration-sources.html#source-section)",
-            "anyOf": [
+            "oneOf": [
                 {
                     "$ref": "#/$defs/sources/embedded"
                 },
@@ -244,9 +287,17 @@
             ]
         },
         "transform": {
-            "anyOf": [
+            "oneOf": [
                 {
                     "$ref": "#/$defs/transforms/dtl"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "oneOf": {
+                            "$ref": "#/$defs/transforms/dtl"
+                        }
+                    }
                 }
             ],
             "defaultSnippets": [
@@ -264,8 +315,10 @@
             ]
         }
     },
+    "additionalProperties": false,
     "required": [
         "_id",
+        "type",
         "source"
     ]
 }
