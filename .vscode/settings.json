@@ -1,8 +1,0 @@
-{
-  "json.schemas": [
-    {
-      "fileMatch": ["pipes/*.conf.json"],
-      "url": "./schemas/pipe.json"
-    }
-  ]
-}
